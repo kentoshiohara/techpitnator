@@ -12,19 +12,34 @@ class ProgressesController < ApplicationController
     progress.assign_sequence
     progress.save!
 
-    next_question = Question.next_question(current_game)
-    if next_question.blank?
-      
-      current_game.status = 'finished'
-      current_game.result = 'incorrect'
-      current_game.save!
+    @extract_comics = ExtractionAlgorithm.new(current_game).compute
 
+    if @extract_comics.count == 0
       redirect_to give_up_game_path(current_game)
-      return 
+      return
     end
-    redirect_to new_game_progresses_path(current_game)
-  end
 
+    if @extract_comics.count == 1
+      redirect_to challenge_game_path(current_game)
+      return
+    end
+
+    if @extract_comics.count >= 2
+      next_question = Question.next_question(current_game)
+      if next_question.blank?
+
+        current_game.status = 'finished'
+        current_game.result = 'incorrect'
+        current_game.save!
+
+        redirect_to give_up_game_path(current_game)
+        return 
+      end
+      redirect_to new_game_progresses_path(current_game)
+      return
+    end
+  end
+  
   private
 
   def create_params
